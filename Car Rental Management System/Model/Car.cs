@@ -8,5 +8,16 @@ namespace Car_Rental_Management_System.Model
 {
     internal class Car
     {
+        public int CarID { get; set; }
+        public string Make { get; set; }
+        public string Model { get; set; }
+        public int Year { get; set; }
+        public decimal DailyRate { get; set; }
+        public bool IsAvailable { get; set; } = true;
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        // Navigation property
+        public virtual ICollection<Rental> Rentals { get; set; }
     }
 }

@@ -8,5 +8,15 @@ namespace Car_Rental_Management_System.Model
 {
     internal class Customer
     {
+        public int CustomerID { get; set; }
+        public string CustomerName { get; set; }
+        public string Phone { get; set; }
+        public string Email { get; set; }
+        public string DriverLicenseNumber { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
+
+        // Navigation property
+        public virtual ICollection<Rental> Rentals { get; set; }
     }
 }
