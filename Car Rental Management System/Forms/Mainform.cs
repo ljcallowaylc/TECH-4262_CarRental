@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using System.Windows.Forms;
+using Car_Rental_Management_System.Forms;
 
 namespace Car_Rental_Management_System
 {
@@ -17,9 +11,28 @@ namespace Car_Rental_Management_System
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void btnCars_Click(object sender, EventArgs e)
         {
+            using (var f = new CarManagementForm())
+            {
+                f.ShowDialog();
+            }
+        }
 
+        private void btnCustomers_Click(object sender, EventArgs e)
+        {
+            using (var f = new CustomerManagementForm())
+            {
+                f.ShowDialog();
+            }
+        }
+
+        private void btnRentals_Click(object sender, EventArgs e)
+        {
+            using (var f = new RentalManagementForm())
+            {
+                f.ShowDialog();
+            }
         }
     }
 }
