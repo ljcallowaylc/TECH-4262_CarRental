@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cae_Rental_Management_System.Data
+namespace Car_Rental_Management_System.Data
 {
     internal class CarRentalContext
     {

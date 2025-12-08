@@ -8,5 +8,6 @@ namespace Car_Rental_Management_System.Services
 {
     internal class RentalService
     {
+
     }
 }
