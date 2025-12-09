@@ -9,7 +9,7 @@ namespace Car_Rental_Management_System.Data
 {
     internal class CaeRentalContext
     {
-        // Update with your server & database
+        // Update with your server & database.
         private static string connectionString =
             "Server=SQLEXPRESS;Database=CarRentalDB;Trusted_Connection=True;";
 
