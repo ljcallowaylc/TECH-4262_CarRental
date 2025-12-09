@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Car_Rental_Management_System.Model
 {
-    internal class Rental
+    public class Rental
     {
         public int RentalID { get; set; }
         public int CustomerID { get; set; }
