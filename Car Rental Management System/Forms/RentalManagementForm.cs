@@ -23,14 +23,14 @@ namespace Car_Rental_Management_System.Forms
             // Simple in-memory data shared only inside this form
             _cars = new BindingList<Car>
             {
-                new Car { CarID = 1, Make = "Toyota", Model = "Corolla", Year = 2020, DailyRate = 40m, IsAvailable = true },
-                new Car { CarID = 2, Make = "Honda", Model = "Civic", Year = 2019, DailyRate = 38m, IsAvailable = true }
+                new Car { CarId = 1, Make = "Toyota", Model = "Corolla", Year = 2020, DailyRate = 40m, IsAvailable = "Rented" },
+                new Car { CarId = 2, Make = "Honda", Model = "Civic", Year = 2019, DailyRate = 38m, IsAvailable = "Availabe" }
             };
 
             _customers = new BindingList<Customer>
             {
-                new Customer { CustomerID = 1, CustomerName = "John Doe" },
-                new Customer { CustomerID = 2, CustomerName = "Jane Smith" }
+                new Customer { CustomerId = 1, FullName = "John Doe" },
+                new Customer { CustomerId = 2, FullName = "Jane Smith" }
             };
 
             cmbCustomer.DataSource = _customers;
@@ -60,8 +60,8 @@ namespace Car_Rental_Management_System.Forms
 
         private void btnCreateRental_Click(object sender, EventArgs e)
         {
-            if (cmbCustomer.SelectedItem is not Customer customer ||
-                cmbCar.SelectedItem is not Car car)
+            if (!(cmbCustomer.SelectedItem is Customer customer &&
+                cmbCar.SelectedItem is Car car))
             {
                 MessageBox.Show("Select a customer and a car.");
                 return;
@@ -77,7 +77,7 @@ namespace Car_Rental_Management_System.Forms
             }
 
             bool overlaps = _rentals.Any(r =>
-                r.CarID == car.CarID &&
+                r.CarId == car.CarId &&
                 r.Status == "Active" &&
                 start <= r.EndDate && r.StartDate <= end);
 
@@ -91,13 +91,13 @@ namespace Car_Rental_Management_System.Forms
             if (days < 1) days = 1;
             decimal estimated = days * car.DailyRate;
 
-            int nextId = _rentals.Count == 0 ? 1 : _rentals[_rentals.Count - 1].RentalID + 1;
+            int nextId = _rentals.Count == 0 ? 1 : _rentals[_rentals.Count - 1].RentalId + 1;
 
             var rental = new Rental
             {
-                RentalID = nextId,
-                CustomerID = customer.CustomerID,
-                CarID = car.CarID,
+                RentalId = nextId,
+                CustomerId = customer.CustomerId,
+                CarId = car.CarId,
                 StartDate = start,
                 EndDate = end,
                 EstimatedCost = estimated,
@@ -129,7 +129,7 @@ namespace Car_Rental_Management_System.Forms
                 return;
             }
 
-            var car = _cars.FirstOrDefault(c => c.CarID == _selectedRental.CarID);
+            var car = _cars.FirstOrDefault(c => c.CarId == _selectedRental.CarId);
             decimal rate = car?.DailyRate ?? 0m;
 
             int days = (int)(returnDate - _selectedRental.StartDate).TotalDays;

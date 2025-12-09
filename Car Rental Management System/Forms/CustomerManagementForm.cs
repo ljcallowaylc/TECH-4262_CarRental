@@ -20,8 +20,8 @@ namespace Car_Rental_Management_System.Forms
             dgvCustomers.AutoGenerateColumns = true;
             dgvCustomers.DataSource = _customers;
 
-            _customers.Add(new Customer { CustomerID = 1, CustomerName = "John Doe", Phone = "555-1234", Email = "john@example.com" });
-            _customers.Add(new Customer { CustomerID = 2, CustomerName = "Jane Smith", Phone = "555-5678", Email = "jane@example.com" });
+            _customers.Add(new Customer { CustomerId = 1, FullName = "John Doe", Phone = "555-1234", Email = "john@example.com" });
+            _customers.Add(new Customer { CustomerId = 2, FullName = "Jane Smith", Phone = "555-5678", Email = "jane@example.com" });
 
             dgvCustomers.SelectionChanged += DgvCustomers_SelectionChanged;
         }
@@ -31,10 +31,10 @@ namespace Car_Rental_Management_System.Forms
             if (dgvCustomers.CurrentRow?.DataBoundItem is Customer cust)
             {
                 _selectedCustomer = cust;
-                txtName.Text = cust.CustomerName;
+                txtName.Text = cust.FullName;
                 txtPhone.Text = cust.Phone;
                 txtEmail.Text = cust.Email;
-                txtLicense.Text = cust.DriverLicenseNumber;
+                txtLicense.Text = cust.DriversLicense;
             }
         }
 
@@ -46,15 +46,15 @@ namespace Car_Rental_Management_System.Forms
                 return;
             }
 
-            int nextId = _customers.Count == 0 ? 1 : _customers[_customers.Count - 1].CustomerID + 1;
+            int nextId = _customers.Count == 0 ? 1 : _customers[_customers.Count - 1].CustomerId + 1;
 
             var cust = new Customer
             {
-                CustomerID = nextId,
-                CustomerName = txtName.Text.Trim(),
+                CustomerId = nextId,
+                FullName = txtName.Text.Trim(),
                 Phone = txtPhone.Text.Trim(),
                 Email = txtEmail.Text.Trim(),
-                DriverLicenseNumber = txtLicense.Text.Trim(),
+                DriversLicense = txtLicense.Text.Trim(),
                 IsActive = true
             };
 
@@ -70,10 +70,10 @@ namespace Car_Rental_Management_System.Forms
                 return;
             }
 
-            _selectedCustomer.CustomerName = txtName.Text.Trim();
+            _selectedCustomer.FullName = txtName.Text.Trim();
             _selectedCustomer.Phone = txtPhone.Text.Trim();
             _selectedCustomer.Email = txtEmail.Text.Trim();
-            _selectedCustomer.DriverLicenseNumber = txtLicense.Text.Trim();
+            _selectedCustomer.DriversLicense = txtLicense.Text.Trim();
 
             dgvCustomers.Refresh();
             ClearInputs();

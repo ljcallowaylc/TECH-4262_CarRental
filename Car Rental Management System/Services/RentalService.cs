@@ -2,195 +2,82 @@
 using Car_Rental_Management_System.Model;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Car_Rental_Management_System.Services
 {
-    internal class RentalService
+    public class RentalService
     {
-        private readonly CarRentalContext _context;
+        private readonly CarRentalContext _db;
+        public RentalService(CarRentalContext db) { _db = db; }
 
-        public RentalService()
+        public static int RentalDaysInclusive(DateTime start, DateTime end)
         {
-            _context = new CarRentalContext();
+            var days = (int)(end.Date - start.Date).TotalDays + 1;
+            return days < 1 ? 1 : days;
         }
 
-        // ✅ BUSINESS LOGIC: Calculate rental cost
-        public decimal CalculateRentalCost(DateTime startDate, DateTime endDate, decimal dailyRate)
+        public static decimal ComputeEstimatedCost(decimal dailyRate, DateTime start, DateTime end)
+            => dailyRate * RentalDaysInclusive(start, end);
+
+        public async Task<bool> IsCarAvailableAsync(int carId, DateTime start, DateTime end, int? excludingRentalId = null)
         {
-            int days = (endDate - startDate).Days;
-            if (days < 1) days = 1; // Business rule: minimum 1 day
-            return days * dailyRate;
+            return !await _db.Rentals
+                .Where(r => r.CarId == carId && !r.IsReturned && (excludingRentalId == null || r.RentalId != excludingRentalId))
+                .AnyAsync(r => r.StartDate <= end.Date && r.EndDate >= start.Date);
         }
 
-        // ✅ BUSINESS LOGIC: Check if car is available for date range
-        public bool IsCarAvailable(int carId, DateTime startDate, DateTime endDate, int? excludeRentalId = null)
+        public async Task<(bool Success, string Error)> CreateRentalAsync(int customerId, int carId, DateTime start, DateTime end)
         {
-            var overlappingRentals = _context.Rentals
-                .Where(r => r.CarID == carId
-                    && r.Status == "Active"
-                    && r.StartDate < endDate
-                    && r.EndDate > startDate);
+            if (end.Date < start.Date) return (false, "End date cannot be before start date.");
+            var car = await _db.Cars.FindAsync(carId);
+            if (car == null || !car.IsActive) return (false, "Selected car not available.");
 
-            // Exclude current rental when editing
-            if (excludeRentalId.HasValue)
+            var available = await IsCarAvailableAsync(carId, start, end);
+            if (!available) return (false, "Car is already rented for the selected dates.");
+
+            var estimated = ComputeEstimatedCost(car.DailyRate, start, end);
+
+            var rental = new Rental
             {
-                overlappingRentals = overlappingRentals.Where(r => r.RentalID != excludeRentalId.Value);
+                CustomerId = customerId,
+                CarId = carId,
+                StartDate = start.Date,
+                EndDate = end.Date,
+                EstimatedCost = estimated,
+                IsReturned = false
+            };
+
+            _db.Rentals.Add(rental);
+            await _db.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string Error)> ReturnRentalAsync(int rentalId, DateTime actualReturnDate, decimal? finalCost = null)
+        {
+            var rental = await _db.Rentals.Include(r => r.Car).FirstOrDefaultAsync(r => r.RentalId == rentalId);
+            if (rental == null) return (false, "Rental not found.");
+            if (rental.IsReturned) return (false, "Rental is already returned.");
+            if (actualReturnDate.Date < rental.StartDate.Date) return (false, "Actual return date cannot be before start date.");
+
+            rental.ActualReturnDate = actualReturnDate.Date;
+            rental.IsReturned = true;
+
+            if (finalCost.HasValue)
+            {
+                rental.FinalCost = finalCost.Value;
+            }
+            else if (rental.Car != null)
+            {
+                var days = RentalDaysInclusive(rental.StartDate, actualReturnDate);
+                rental.FinalCost = rental.Car.DailyRate * days;
             }
 
-            return !overlappingRentals.Any();
-        }
-
-        // ✅ BUSINESS LOGIC: Validate rental dates
-        public (bool IsValid, string ErrorMessage) ValidateRentalDates(DateTime startDate, DateTime endDate)
-        {
-            if (endDate < startDate)
-                return (false, "End date cannot be before start date.");
-
-            if (startDate < DateTime.Today)
-                return (false, "Start date cannot be in the past.");
-
-            return (true, string.Empty);
-        }
-
-        // ✅ BUSINESS LOGIC: Create new rental
-        public (bool Success, string Message) CreateRental(int customerId, int carId, DateTime startDate, DateTime endDate)
-        {
-            try
-            {
-                // Validate dates
-                var dateValidation = ValidateRentalDates(startDate, endDate);
-                if (!dateValidation.IsValid)
-                    return (false, dateValidation.ErrorMessage);
-
-                // Check car availability
-                if (!IsCarAvailable(carId, startDate, endDate))
-                    return (false, "Car is not available for the selected dates.");
-
-                // Get car details
-                var car = _context.Cars.Find(carId);
-                if (car == null || !car.IsActive)
-                    return (false, "Invalid or inactive car selected.");
-
-                // Calculate cost
-                decimal estimatedCost = CalculateRentalCost(startDate, endDate, car.DailyRate);
-
-                // Create rental
-                var rental = new Rental
-                {
-                    CustomerID = customerId,
-                    CarID = carId,
-                    StartDate = startDate,
-                    EndDate = endDate,
-                    EstimatedCost = estimatedCost,
-                    Status = "Active",
-                    CreatedDate = DateTime.Now
-                };
-
-                // Update car availability
-                car.IsAvailable = false;
-
-                _context.Rentals.Add(rental);
-                _context.SaveChanges();
-
-                return (true, "Rental created successfully.");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Error creating rental: {ex.Message}");
-            }
-        }
-
-        // ✅ BUSINESS LOGIC: Return car
-        public (bool Success, string Message) ReturnCar(int rentalId, DateTime returnDate, decimal? adjustedCost = null)
-        {
-            try
-            {
-                var rental = _context.Rentals
-                    .Include(r => r.Car)
-                    .FirstOrDefault(r => r.RentalID == rentalId);
-
-                if (rental == null)
-                    return (false, "Rental not found.");
-
-                if (rental.Status == "Returned")
-                    return (false, "This rental has already been returned.");
-
-                if (returnDate < rental.StartDate)
-                    return (false, "Return date cannot be before start date.");
-
-                // Update rental
-                rental.ActualReturnDate = returnDate;
-                rental.Status = "Returned";
-
-                // Calculate final cost or use adjusted cost
-                if (adjustedCost.HasValue)
-                {
-                    rental.FinalCost = adjustedCost.Value;
-                }
-                else
-                {
-                    rental.FinalCost = CalculateRentalCost(rental.StartDate, returnDate, rental.Car.DailyRate);
-                }
-
-                // Mark car as available
-                rental.Car.IsAvailable = true;
-
-                _context.SaveChanges();
-
-                return (true, "Car returned successfully.");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"Error returning car: {ex.Message}");
-            }
-        }
-
-        // ✅ BUSINESS LOGIC: Get all rentals
-        public List<Rental> GetAllRentals()
-        {
-            return _context.Rentals
-                .Include(r => r.Customer)
-                .Include(r => r.Car)
-                .OrderByDescending(r => r.CreatedDate)
-                .ToList();
-        }
-
-        // ✅ BUSINESS LOGIC: Get active rentals only
-        public List<Rental> GetActiveRentals()
-        {
-            return _context.Rentals
-                .Include(r => r.Customer)
-                .Include(r => r.Car)
-                .Where(r => r.Status == "Active")
-                .OrderBy(r => r.EndDate)
-                .ToList();
-        }
-
-        // ✅ BUSINESS LOGIC: Get rentals by customer
-        public List<Rental> GetRentalsByCustomer(int customerId)
-        {
-            return _context.Rentals
-                .Include(r => r.Car)
-                .Where(r => r.CustomerID == customerId)
-                .OrderByDescending(r => r.CreatedDate)
-                .ToList();
-        }
-
-        // ✅ BUSINESS LOGIC: Get rental details
-        public Rental GetRentalById(int rentalId)
-        {
-            return _context.Rentals
-                .Include(r => r.Customer)
-                .Include(r => r.Car)
-                .FirstOrDefault(r => r.RentalID == rentalId);
-        }
-
-        public void Dispose()
-        {
-            _context?.Dispose();
+            await _db.SaveChangesAsync();
+            return (true, null);
         }
     }
 }

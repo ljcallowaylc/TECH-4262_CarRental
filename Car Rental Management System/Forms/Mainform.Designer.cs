@@ -80,6 +80,7 @@ namespace Car_Rental_Management_System
             this.Name = "Mainform";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Car Rental Management";
+            this.Load += new System.EventHandler(this.Mainform_Load);
             this.ResumeLayout(false);
 
         }

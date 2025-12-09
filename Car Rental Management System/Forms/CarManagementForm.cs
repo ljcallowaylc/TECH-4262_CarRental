@@ -23,8 +23,8 @@ namespace Car_Rental_Management_System.Forms
             dgvCars.DataSource = _cars;
 
             // Just a couple of sample rows so the grid isn't empty
-            _cars.Add(new Car { CarID = 1, Make = "Toyota", Model = "Corolla", Year = 2020, DailyRate = 40m });
-            _cars.Add(new Car { CarID = 2, Make = "Honda", Model = "Civic", Year = 2019, DailyRate = 38m });
+            _cars.Add(new Car { CarId = 1, Make = "Toyota", Model = "Corolla", Year = 2020, DailyRate = 40m });
+            _cars.Add(new Car { CarId = 2, Make = "Honda", Model = "Civic", Year = 2019, DailyRate = 38m });
 
             dgvCars.SelectionChanged += DgvCars_SelectionChanged;
         }
@@ -51,16 +51,16 @@ namespace Car_Rental_Management_System.Forms
                 return;
             }
 
-            int nextId = _cars.Count == 0 ? 1 : _cars[_cars.Count - 1].CarID + 1;
+            int nextId = _cars.Count == 0 ? 1 : _cars[_cars.Count - 1].CarId + 1;
 
             var car = new Car
             {
-                CarID = nextId,
+                CarId = nextId,
                 Make = txtMake.Text.Trim(),
                 Model = txtModel.Text.Trim(),
                 Year = (int)numYear.Value,
                 DailyRate = numDailyRate.Value,
-                IsAvailable = true,
+                IsAvailable = "Availbe",
                 IsActive = chkActive.Checked
             };
 

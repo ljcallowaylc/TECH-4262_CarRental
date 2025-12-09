@@ -34,5 +34,10 @@ namespace Car_Rental_Management_System
                 f.ShowDialog();
             }
         }
+
+        private void Mainform_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
