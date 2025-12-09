@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Car_Rental_Management_System.Data
 {
-    internal class CaeRentalContext
+    internal class CarRentalContext
     {
         // Update with your server & database.
         private static string connectionString =
